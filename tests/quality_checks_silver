@@ -1,0 +1,119 @@
+/*-----QUALITY CHECK FOR SILVER TABLE 
+ JUST SCANNING THE FIRST TABLE COMPLETELY 
+SELECT * FROM silver.crm_cust_info; 
+
+/* (1)Check for Nulls or Duplicates in Primary Key
+--Expectation: No Result
+
+SELECT cst_id, COUNT(*)
+FROM silver.crm_cust_info
+GROUP BY cst_id
+HAVING COUNT(*) >1 OR cst_id IS NULL;  -- WE have an NO issue , 
+
+--- (2)Check for unwanted spaces
+---- Expectation : No Results
+
+----- (2.1)cst_firstname
+SELECT cst_firstname
+FROM silver.crm_cust_info
+WHERE cst_firstname != TRIM(cst_firstname) --WE have an NO issue 
+
+
+
+-----(2.2)cst_lastname
+SELECT cst_lastname
+FROM silver.crm_cust_info
+WHERE cst_lastname != TRIM(cst_lastname) --- we have an NO  issue 
+
+-----(2.3)gndr
+SELECT cst_gndr
+FROM silver.crm_cust_info
+WHERE cst_gndr != TRIM(cst_gndr) --- we don't have any issue , we are not getting any spaces
+
+-----(3)Data Standardization & Consistency 
+
+-----(3.1) For gender
+SELECT DISTINCT cst_gndr
+FROM silver.crm_cust_info  --- we got NULL , F AND M 
+
+-----(3.2) For marital_status
+SELECT DISTINCT cst_marital_status
+FROM silver.crm_cust_info; --- we got NULL S SND M
+
+
+----JUST SCNANNING THE SECOND TABLE COMPLETELY
+SELECT * FROM silver.crm_prd_info;
+
+-------(1) Check for NULLS and Duplicates in Primary Key
+----------Expectation : No Result
+SELECT
+prd_id,
+COUNT(*)
+FROM silver.crm_prd_info
+GROUP BY prd_id
+HAVING COUNT(*) > 1  OR prd_id IS NULL  --- we didn't get any null or duplicate
+
+---(2) Check for unwanted spaces
+---Expectation : No Results
+SELECT prd_nm
+FROM silver.crm_prd_info
+WHERE prd_nm !=TRIM(prd_nm) --- everything is OK , no unwanted spaces
+
+---(3) Check for NULLs or Negative Numbers
+---Expectation : No Results
+SELECT prd_cost
+FROM silver.crm_prd_info
+WHERE prd_cost < 0 OR prd_cost IS NULL  --- WE didn't get any NULLs
+
+---(4)Data Standardization & Consistency 
+SELECT DISTINCT prd_line
+FROM silver.crm_prd_info ; --- we got Mountains,Roads,Other Sales AND Touring
+
+----(5)Check for invallid Date Orders
+--EXPECTATION : NULL
+SELECT * FROM
+silver.crm_prd_info
+WHERE prd_end_dt < prd_start_dt  ----we correctected it 
+
+
+-----JUST CHECKING THE THIRD TABLE CORRECTLY
+SELECT * FROM silver.crm_sales_details; --everything is perfect--
+
+---doing the quality check all together for the third table
+SELECT DISTINCT 
+sls_sales,
+sls_quantity,
+sls_price
+FROM silver.crm_sales_details
+WHERE sls_sales != sls_quantity * sls_price
+OR sls_sales IS NULL OR sls_quantity IS NULL OR sls_price IS NULL
+OR sls_sales <= 0 OR sls_quantity <= 0 OR sls_price <= 0
+ORDER BY sls_sales , sls_quantity , sls_price;
+
+
+--Doing the quality check for the fourth table
+
+--Identify out-of-Range Dates
+SELECT DISTINCT
+bdate
+FROM silver.erp_cust_az12
+WHERE bdate < '1924-01-01' OR bdate > GETDATE()  --works fine
+
+--Data Standardization & Consistency
+SELECT DISTINCT 
+gen
+FROM Silver.erp_cust_az12  -- works fine
+
+
+------Doing the quality check for the fifth table
+
+---Checking the fifth table completely
+SELECT *FROM silver.erp_loc_a101
+
+--Data Standardization & Consistency
+SELECT DISTINCT cntry
+FROM silver.erp_loc_a101
+ORDER BY cntry   --- works fine
+
+-----Checking the sixth table completely
+SELECT * FROM silver.erp_px_cat_g1v2
